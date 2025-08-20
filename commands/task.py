@@ -7,12 +7,14 @@ from rich.console import Console
 
 from db.db import tasks_table
 from models.task import Task
+from models.list import List as MyListModel
 from utils.datetime_util import parse_date
 from db.db import tasks_table
+from db.db import lists_table
 
 task_app = typer.Typer()
 
-@task_app.command("list")
+@task_app.command("show")
 def list_tasks(
     list_name: Optional[str] = typer.Option(None, "--list", "-l", help="Filter by list name"),
     tag: Optional[str] = typer.Option(None, "--tag", "-t", help="Filter by tag"),
@@ -82,6 +84,31 @@ def add_task(
         due=due_date,
         created_at=datetime.now(),
     )
+    from tinydb import Query
+
+    if list_name:
+        list_query = Query()
+        existing_list = lists_table.get(list_query.name == list_name)
+        if existing_list:
+            # List exists, proceed to add task
+            pass
+        else:
+            # List doesn't exist, create it
+            new_list = MyListModel(name=list_name, created_at=datetime.now(), tasks=[])
+            lists_table.insert(new_list.model_dump(mode='json', exclude_none=True))
+
+    task_dict = task.model_dump(mode='json', exclude_none=True)
+    task_id = tasks_table.insert(task_dict)
+
+    if list_name:
+        list_query = Query()
+        existing_list = lists_table.get(list_query.name == list_name)
+        if existing_list:
+            updated_tasks = existing_list.get("tasks", []) + [task_id]
+            lists_table.update({"tasks": updated_tasks}, list_query.name == list_name)
+        else:
+            # Already created above, now update with the new task id
+            lists_table.update({"tasks": [task_id]}, list_query.name == list_name)
     task_dict = task.model_dump(mode='json', exclude_none=True)
     task_id = tasks_table.insert(task_dict)
     typer.echo(f"✅ Task added with ID {task_id}")
