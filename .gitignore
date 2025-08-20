@@ -1,0 +1,14 @@
+#Virtual Env
+.venv
+
+#UV
+.python-version
+
+
+#pycache
+__pycache__/
+*/__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
