@@ -17,3 +17,12 @@ repos:
         args: ["--maxkb=500"]
       - id: end-of-file-fixer
       - id: trailing-whitespace
+
+  #- repo: local
+  #  hooks:
+  #    - id: pytest
+  #      name: pytest
+  #      entry: uv
+  #      language: system
+  #      pass_filenames: false
+  #      args: ["run", "pytest"]
