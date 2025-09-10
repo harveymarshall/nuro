@@ -75,7 +75,10 @@ def add_task(
     list_name: Optional[str] = typer.Option(None, "--list", "-l", help="List name"),
     due: Optional[str] = typer.Option(None, "--due", "-d", help="Due date (YYYY-MM-DD)")
 ):
-    """Add a new task to your list."""
+    """
+    Add a new task to your list.
+    Doesn't allow duplicate tasks.
+    """
     due_date = parse_date(due) if due else None
     task = Task(
         title=title,
