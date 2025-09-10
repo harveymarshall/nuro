@@ -117,8 +117,6 @@ def add_task(
         else:
             # Already created above, now update with the new task id
             lists_table.update({"tasks": [task_id]}, list_query.name == list_name)
-    task_dict = task.model_dump(mode='json', exclude_none=True)
-    task_id = tasks_table.insert(task_dict)
     typer.echo(f"✅ Task added with ID {task_id}")
 
 @task_app.command("update")
