@@ -50,6 +50,7 @@ def list_tasks(
 
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("Status", style="bold")
+    table.add_column("ID")
     table.add_column("Title")
     table.add_column("Due")
     table.add_column("Tags")
@@ -61,7 +62,12 @@ def list_tasks(
         tags = ", ".join(task.get("tags", []))
         list_name = task.get("list", "")
         table.add_row(
-            status, task.get("title", ""), due[:10] if due else "", tags, list_name
+            status,
+            str(task.doc_id) if hasattr(task, "doc_id") else str(task.get("id", "")),
+            task.get("title", ""),
+            due[:10] if due else "",
+            tags,
+            list_name,
         )
 
     console = Console()
@@ -217,12 +223,16 @@ def upcoming_tasks():
 
 
 @task_app.command("delete")
-def delete_tasks(title: str = typer.Argument(..., help="The task description")):
+def delete_tasks(id: int = typer.Argument(..., help="Delete a task using its ID.")):
     TaskQuery = Query()
-
-    existing_task = tasks_table.remove(TaskQuery.title == title)
+    task = tasks_table.get(doc_id=id)
+    if not task:
+        typer.echo(f"❌ Task with id: {id} not found.")
+        return
+    title = task.get("title", "")
+    existing_task = tasks_table.remove(TaskQuery.doc_id == id)
     if not existing_task:
-        typer.echo(f"❌ Task with title '{title}' not found.")
+        typer.echo(f"❌ Task with id: {id} not found.")
         return
 
     typer.echo(f"✅ Tasks Deleted with Title '{title}'.")
