@@ -1,12 +1,14 @@
 import typer
 from datetime import datetime, timedelta
 from typing import List, Optional
+from tinydb import Query
 
 from rich.table import Table
 from rich.console import Console
 
 from db.db import tasks_table
 from models.task import Task
+
 from models.list import List as MyListModel
 from utils.datetime_util import parse_date
 from db.db import tasks_table
@@ -21,7 +23,6 @@ def list_tasks(
     done: Optional[bool] = typer.Option(None, "--done", help="Filter by completion (true/false)")
 ):
     """List your tasks with optional filters."""
-    from tinydb import Query
     TaskQuery = Query()
 
     query = None
@@ -84,7 +85,6 @@ def add_task(
         due=due_date,
         created_at=datetime.now(),
     )
-    from tinydb import Query
 
     if list_name:
         list_query = Query()
@@ -118,7 +118,6 @@ def update_task(
     title: str = typer.Argument(..., help="The task description")
 ):
     """Update a task in list"""
-    from tinydb import Query
     TaskQuery = Query()
     existing_task = tasks_table.get(TaskQuery.title == title)
     if not existing_task:
@@ -181,3 +180,19 @@ def upcoming_tasks():
 
     console = Console()
     console.print(table)
+
+@task_app.command("delete")
+def delete_tasks(
+    title: str = typer.Argument(..., help="The task description")
+):
+
+    TaskQuery = Query()
+
+    existing_task = tasks_table.remove(TaskQuery.title == title)
+    if not existing_task:
+        typer.echo(f"❌ Task with title '{title}' not found.")
+        return
+
+    typer.echo(f"✅ Tasks Deleted with Title '{title}'.")
+
+
