@@ -4,7 +4,8 @@
 #UV
 .python-version
 
-
+# DB JSON File
+db.json
 
 # pycache
 __pycache__/
