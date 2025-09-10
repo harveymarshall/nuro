@@ -85,6 +85,12 @@ def add_task(
         created_at=datetime.now(),
     )
 
+    title_query = Query()
+    existing_title = tasks_table.get(title_query.title == title)
+    if existing_title:
+        typer.echo(f"❌ A Task with this title: '{title}' already exists")
+        return
+
     if list_name:
         list_query = Query()
         existing_list = lists_table.get(list_query.name == list_name)
@@ -127,13 +133,15 @@ def update_task(
     new_tags = typer.prompt("New tags (comma separated)", default=",".join(existing_task.get("tags", [])))
     new_list = typer.prompt("New list", default=existing_task.get("list", ""))
     new_due = typer.prompt("New due date (YYYY-MM-DD)", default=existing_task.get("due", ""))
+    new_done = typer.prompt("New done status True/False", default=existing_task.get("done", ""))
 
     updated_task = {
         "title": new_title,
         "tags": [tag.strip() for tag in new_tags.split(",")] if new_tags else [],
         "list": new_list if new_list else None,
         "due": new_due if new_due else None,
-        "updated_at": datetime.now().isoformat()
+        "updated_at": datetime.now().isoformat(),
+        "done": new_done
     }
 
     tasks_table.update(updated_task, TaskQuery.title == title)
