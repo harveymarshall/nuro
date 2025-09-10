@@ -1,25 +1,28 @@
-import typer
 from datetime import datetime, timedelta
 from typing import List, Optional
+
+import typer
+from rich.console import Console
+from rich.table import Table
 from tinydb import Query
 
-from rich.table import Table
-from rich.console import Console
-
-from ..db.db import tasks_table
-from ..models.task import Task
-
+from ..db.db import lists_table, tasks_table
 from ..models.list import List as MyListModel
+from ..models.task import Task
 from ..utils.datetime_util import parse_date
-from ..db.db import lists_table
 
 task_app = typer.Typer()
 
+
 @task_app.command("show")
 def list_tasks(
-    list_name: Optional[str] = typer.Option(None, "--list", "-l", help="Filter by list name"),
+    list_name: Optional[str] = typer.Option(
+        None, "--list", "-l", help="Filter by list name"
+    ),
     tag: Optional[str] = typer.Option(None, "--tag", "-t", help="Filter by tag"),
-    done: Optional[bool] = typer.Option(None, "--done", help="Filter by completion (true/false)")
+    done: Optional[str] = typer.Option(
+        None, "--done", "-d", help="Filter by completion (true/false)"
+    ),
 ):
     """List your tasks with optional filters."""
     TaskQuery = Query()
@@ -32,7 +35,8 @@ def list_tasks(
         tag_query = TaskQuery.tags.any([tag])
         query = tag_query if query is None else query & tag_query
     if done is not None:
-        done_query = TaskQuery.done == done
+        done_bool = done.lower() == "true"
+        done_query = TaskQuery.done == done_bool
         query = done_query if query is None else query & done_query
 
     if query:
@@ -57,11 +61,7 @@ def list_tasks(
         tags = ", ".join(task.get("tags", []))
         list_name = task.get("list", "")
         table.add_row(
-            status,
-            task.get("title", ""),
-            due[:10] if due else "",
-            tags,
-            list_name
+            status, task.get("title", ""), due[:10] if due else "", tags, list_name
         )
 
     console = Console()
@@ -73,7 +73,9 @@ def add_task(
     title: str = typer.Argument(..., help="The task description"),
     tags: List[str] = typer.Option([], "--tags", "-t", help="Tags like @work"),
     list_name: Optional[str] = typer.Option(None, "--list", "-l", help="List name"),
-    due: Optional[str] = typer.Option(None, "--due", "-d", help="Due date (YYYY-MM-DD)")
+    due: Optional[str] = typer.Option(
+        None, "--due", "-d", help="Due date (YYYY-MM-DD)"
+    ),
 ):
     """
     Add a new task to your list.
@@ -99,30 +101,43 @@ def add_task(
         existing_list = lists_table.get(list_query.name == list_name)
         if existing_list:
             # List exists, proceed to add task
+            existing_tags = set(existing_list.get("tags", []))
+            new_tags = set(tags)
+            all_tags = list(existing_tags.union(new_tags))
+            lists_table.update({"tags": all_tags}, list_query.name == list_name)
             pass
         else:
             # List doesn't exist, create it
             new_list = MyListModel(name=list_name, created_at=datetime.now(), tasks=[])
-            lists_table.insert(new_list.model_dump(mode='json', exclude_none=True))
+            lists_table.insert(new_list.model_dump(mode="json", exclude_none=True))
 
-    task_dict = task.model_dump(mode='json', exclude_none=True)
+    task_dict = task.model_dump(mode="json", exclude_none=True)
     task_id = tasks_table.insert(task_dict)
 
     if list_name:
         list_query = Query()
         existing_list = lists_table.get(list_query.name == list_name)
         if existing_list:
+            # Update tasks
             updated_tasks = existing_list.get("tasks", []) + [task_id]
-            lists_table.update({"tasks": updated_tasks}, list_query.name == list_name)
+            # Merge tags from task into list tags
+            existing_tags = set(existing_list.get("tags", []))
+            new_tags = set(tags)
+            all_tags = list(existing_tags.union(new_tags))
+            lists_table.update(
+                {"tasks": updated_tasks, "tags": all_tags}, list_query.name == list_name
+            )
         else:
-            # Already created above, now update with the new task id
-            lists_table.update({"tasks": [task_id]}, list_query.name == list_name)
+            # Already created above, now update with the new task id and tags
+            lists_table.update(
+                {"tasks": [task_id], "tags": list(set(tags))},
+                list_query.name == list_name,
+            )
     typer.echo(f"✅ Task added with ID {task_id}")
 
+
 @task_app.command("update")
-def update_task(
-    title: str = typer.Argument(..., help="The task description")
-):
+def update_task(title: str = typer.Argument(..., help="The task description")):
     """Update a task in list"""
     TaskQuery = Query()
     existing_task = tasks_table.get(TaskQuery.title == title)
@@ -131,10 +146,16 @@ def update_task(
         return
 
     new_title = typer.prompt("New title", default=existing_task.get("title"))
-    new_tags = typer.prompt("New tags (comma separated)", default=",".join(existing_task.get("tags", [])))
+    new_tags = typer.prompt(
+        "New tags (comma separated)", default=",".join(existing_task.get("tags", []))
+    )
     new_list = typer.prompt("New list", default=existing_task.get("list", ""))
-    new_due = typer.prompt("New due date (YYYY-MM-DD)", default=existing_task.get("due", ""))
-    new_done = typer.prompt("New done status True/False", default=existing_task.get("done", ""))
+    new_due = typer.prompt(
+        "New due date (YYYY-MM-DD)", default=existing_task.get("due", "")
+    )
+    new_done = typer.prompt(
+        "New done status True/False", default=existing_task.get("done", "")
+    )
 
     updated_task = {
         "title": new_title,
@@ -142,11 +163,12 @@ def update_task(
         "list": new_list if new_list else None,
         "due": new_due if new_due else None,
         "updated_at": datetime.now().isoformat(),
-        "done": new_done
+        "done": new_done,
     }
 
     tasks_table.update(updated_task, TaskQuery.title == title)
     typer.echo(f"✅ Task '{title}' updated.")
+
 
 @task_app.command("upcoming")
 def upcoming_tasks():
@@ -157,7 +179,11 @@ def upcoming_tasks():
 
     upcoming = []
 
-    table = Table(show_header=True, header_style="bold magenta", title="📅 Upcoming Tasks (Due in next 5 days):\n")
+    table = Table(
+        show_header=True,
+        header_style="bold magenta",
+        title="📅 Upcoming Tasks (Due in next 5 days):\n",
+    )
     table.add_column("Status", style="bold")
     table.add_column("Title")
     table.add_column("Due")
@@ -189,11 +215,9 @@ def upcoming_tasks():
     console = Console()
     console.print(table)
 
-@task_app.command("delete")
-def delete_tasks(
-    title: str = typer.Argument(..., help="The task description")
-):
 
+@task_app.command("delete")
+def delete_tasks(title: str = typer.Argument(..., help="The task description")):
     TaskQuery = Query()
 
     existing_task = tasks_table.remove(TaskQuery.title == title)
@@ -202,5 +226,3 @@ def delete_tasks(
         return
 
     typer.echo(f"✅ Tasks Deleted with Title '{title}'.")
-
-

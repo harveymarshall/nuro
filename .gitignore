@@ -17,3 +17,6 @@ __pycache__/*
 *.pyc
 *.pyo
 *.pyd
+
+# pytest
+.pytest_cache

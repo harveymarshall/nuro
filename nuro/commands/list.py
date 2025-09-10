@@ -1,23 +1,26 @@
-import typer
 from datetime import datetime, timedelta
 from typing import List, Optional
 
-from rich.table import Table
+import typer
 from rich.console import Console
+from rich.table import Table
 
+from ..db.db import lists_table, tasks_table
 from ..models.list import List as MyListModel
 from ..utils.datetime_util import parse_date
-from ..db.db import tasks_table
-from ..db.db import lists_table
 
 list_app = typer.Typer()
 
+
 @list_app.command("show")
 def list_tasks(
-    name: Optional[str] = typer.Option(None, "--name", "-l", help="Filter by list name"),
-    tag: Optional[str] = typer.Option(None, "--tag", "-t", help="Filter by tag")):
-
+    name: Optional[str] = typer.Option(
+        None, "--name", "-l", help="Filter by list name"
+    ),
+    tag: Optional[str] = typer.Option(None, "--tag", "-t", help="Filter by tag"),
+):
     from tinydb import Query
+
     ListQuery = Query()
 
     query = None
@@ -34,23 +37,28 @@ def list_tasks(
         results = lists_table.all()
 
     if not results:
-        typer.echo("📭 No tasks found.")
+        typer.echo("📭 No lists found.")
         return
 
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("Name")
     table.add_column("Tags")
     table.add_column("Tasks")
+    table.add_column("Completed Tasks")
 
     for lists in results:
         tags = ", ".join(lists.get("tags", []))
         name = lists.get("name", "")
-        tasks = str(len(lists.get("tasks", [])))
-        table.add_row(
-            name,
-            tags,
-            tasks
-        )
+        task_ids = lists.get("tasks", [])
+        tasks_count = str(len(task_ids))
+        completed_tasks = 0
+        for task_id in task_ids:
+            # TinyDB uses doc_id for primary key
+            task_obj = tasks_table.get(doc_id=task_id)
+            if task_obj and task_obj.get("done") in [True, "true", "True", 1]:
+                completed_tasks += 1
+
+        table.add_row(name, tags, tasks_count, f"{completed_tasks} / {tasks_count}")
 
     console = Console()
     console.print(table)
@@ -70,14 +78,15 @@ def add_list(
             typer.echo(f"❌ List with name: {name} already exists.")
         else:
             # List doesn't exist, create it
-            new_list = MyListModel(name=name, tags=tags, created_at=datetime.now(), tasks=[])
-            lists_table.insert(new_list.model_dump(mode='json', exclude_none=True))
+            new_list = MyListModel(
+                name=name, tags=tags, created_at=datetime.now(), tasks=[]
+            )
+            lists_table.insert(new_list.model_dump(mode="json", exclude_none=True))
             typer.echo(f"✅ New List Added with name: {name}")
 
+
 @list_app.command("delete")
-def delete_list(
-    name: str = typer.Argument(..., help="The list name")
-):
+def delete_list(name: str = typer.Argument(..., help="The list name")):
     from tinydb import Query
 
     if name:
@@ -96,5 +105,3 @@ def delete_list(
             typer.echo(f"🗑️  List {name} deleted.")
         else:
             typer.echo(f"❌ No Lists with Name: {name}")
-
-
