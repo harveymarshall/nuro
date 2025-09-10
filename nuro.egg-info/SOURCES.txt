@@ -1,0 +1,16 @@
+LICENSE
+README.md
+pyproject.toml
+commands/list.py
+commands/task.py
+db/db.py
+models/list.py
+models/task.py
+nuro/__init__.py
+nuro/main.py
+nuro.egg-info/PKG-INFO
+nuro.egg-info/SOURCES.txt
+nuro.egg-info/dependency_links.txt
+nuro.egg-info/entry_points.txt
+nuro.egg-info/requires.txt
+nuro.egg-info/top_level.txt

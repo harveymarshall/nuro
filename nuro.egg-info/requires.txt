@@ -1,0 +1,4 @@
+pydantic>=2.11.7
+rich>=14.1.0
+tinydb>=4.8.2
+typer>=0.16.0

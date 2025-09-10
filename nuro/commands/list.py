@@ -5,12 +5,10 @@ from typing import List, Optional
 from rich.table import Table
 from rich.console import Console
 
-from db.db import tasks_table
-from models.task import Task
-from models.list import List as MyListModel
-from utils.datetime_util import parse_date
-from db.db import tasks_table
-from db.db import lists_table
+from ..models.list import List as MyListModel
+from ..utils.datetime_util import parse_date
+from ..db.db import tasks_table
+from ..db.db import lists_table
 
 list_app = typer.Typer()
 

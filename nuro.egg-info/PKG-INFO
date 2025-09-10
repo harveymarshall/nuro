@@ -1,0 +1,35 @@
+Metadata-Version: 2.4
+Name: nuro
+Version: 0.1.0
+Summary: Add your description here
+Requires-Python: >=3.13
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pydantic>=2.11.7
+Requires-Dist: rich>=14.1.0
+Requires-Dist: tinydb>=4.8.2
+Requires-Dist: typer>=0.16.0
+Dynamic: license-file
+
+# nuro
+
+CLI Productivity Tool for task and habit management.
+
+Currently **nuro** has the ability to create and manage tasks using lists to group them.
+
+## Tasks
+
+Tasks can have the follwing attributes.
+
+| Attribute  | Type               | Default           | Description          |
+| ---------- | ------------------ | ----------------- | -------------------- |
+| title      | str                | (required)        | Title of the task    |
+| created_at | datetime           | current_timestamp | Creation timestamp   |
+| due        | Optional[datetime] | None              | Due date/time        |
+| tags       | List[str]          | []                | List of tags         |
+| list       | Optional[str]      | None              | Associated list name |
+| done       | bool               | False             | Completion status    |
+
+These current commands are available for Tasks: 1. add (Adds a new Task) 2. show (Lists tags with optional filters)
+
+## Lists
