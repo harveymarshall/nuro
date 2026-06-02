@@ -94,7 +94,7 @@ nuro lists show
 - **Delete a list:**
 
 ```sh
-nuro tasks delete list
+nuro lists delete "Personal"
 ```
 
 This will delete the list with that name.
