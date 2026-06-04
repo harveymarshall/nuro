@@ -1,4 +1,7 @@
 
+<p align="center">
+  <img src="assets/logo.png" alt="nuro logo" width="240">
+</p>
 
 # nuro
 
