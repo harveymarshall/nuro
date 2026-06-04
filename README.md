@@ -6,20 +6,57 @@ CLI Productivity Tool for task and habit management.
 
 Currently **nuro** has the ability to create and manage tasks using lists to group them.
 
+## Requirements
+
+- **Python 3.13+** (check with `python3 --version`)
+- On Linux/macOS, install [uv](https://docs.astral.sh/uv/getting-started/installation/) for the simplest setup (uv can also install Python 3.13 for you)
+
 ## Installation
 
-### From GitHub
+### Install from GitHub (recommended)
+
+Install **nuro** as a global CLI with [uv](https://docs.astral.sh/uv/) (isolated from your system Python):
 
 ```sh
-pip install git+https://github.com/harveymarshall/nuro.git@main
+uv tool install "nuro @ git+https://github.com/harveymarshall/nuro.git@main"
 ```
 
-### From Local Clone
-
-Clone the repository, then run:
+Ensure `~/.local/bin` is on your `PATH`, then verify:
 
 ```sh
-pip install -e .
+nuro --help
+```
+
+If you do not have Python 3.13 yet:
+
+```sh
+uv python install 3.13
+```
+
+### Install with pip
+
+Use a **Python 3.13+** virtual environment (required on most Linux distros that ship Python 3.12 by default):
+
+```sh
+python3.13 -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install "nuro @ git+https://github.com/harveymarshall/nuro.git@main"
+nuro --help
+```
+
+### Install from a local clone (development)
+
+```sh
+git clone https://github.com/harveymarshall/nuro.git
+cd nuro
+uv sync
+nuro --help
+```
+
+Run tests (optional):
+
+```sh
+uv run pytest
 ```
 
 ## Usage Examples
